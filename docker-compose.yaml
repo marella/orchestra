@@ -1,0 +1,131 @@
+x-zoo-servers: &zoo-servers
+  ZOO_SERVERS: server.1=172.30.0.11:2888:3888;2181 server.2=172.30.0.12:2888:3888;2181 server.3=172.30.0.13:2888:3888;2181
+
+x-env: &env
+  ZOO_CONNECT_STRING: 172.30.0.11:2181,172.30.0.12:2181,172.30.0.13:2181
+  DNS_SERVERS: 172.30.0.1,172.30.0.2,8.8.8.8
+
+x-volumes:
+  - &volume-app
+    type: bind
+    source: ./build/libs
+    target: /opt/app
+    read_only: true
+  - &volume-docker
+    type: bind
+    source: /var/run/docker.sock
+    target: /var/run/docker.sock
+    read_only: true
+  - &volume-dns01
+    type: volume
+    source: dns01
+    target: /dns
+  - &volume-dns02
+    type: volume
+    source: dns02
+    target: /dns
+
+x-app: &app
+  entrypoint: java -jar orchestra-0.0.1-SNAPSHOT.jar
+  environment:
+    <<: *env
+  image: adoptopenjdk:11-jre
+  volumes:
+    - *volume-app
+  working_dir: /opt/app
+  networks:
+    - orchestra
+  restart: always
+
+x-coredns: &coredns
+  image: envs/orchestra:dns
+  build:
+    context: ./dns
+  restart: always
+
+services:
+  zoo1:
+    image: zookeeper
+    restart: always
+    environment:
+      <<: *zoo-servers
+      ZOO_MY_ID: 1
+    networks:
+      orchestra:
+        ipv4_address: 172.30.0.11
+
+  zoo2:
+    image: zookeeper
+    restart: always
+    environment:
+      <<: *zoo-servers
+      ZOO_MY_ID: 2
+    networks:
+      orchestra:
+        ipv4_address: 172.30.0.12
+
+  zoo3:
+    image: zookeeper
+    restart: always
+    environment:
+      <<: *zoo-servers
+      ZOO_MY_ID: 3
+    networks:
+      orchestra:
+        ipv4_address: 172.30.0.13
+
+  coredns01:
+    <<: *coredns
+    volumes:
+      - *volume-dns01
+    networks:
+      orchestra:
+        ipv4_address: 172.30.0.1
+
+  coredns02:
+    <<: *coredns
+    volumes:
+      - *volume-dns02
+    networks:
+      orchestra:
+        ipv4_address: 172.30.0.2
+
+  api01:
+    <<: *app
+
+  master01:
+    <<: *app
+    command: run controller --id 1
+
+  node01:
+    <<: *app
+    command: run worker --id 1
+    volumes:
+      - *volume-app
+      - *volume-docker
+
+  dns01:
+    <<: *app
+    command: run dns
+    volumes:
+      - *volume-app
+      - *volume-dns01
+
+  dns02:
+    <<: *app
+    command: run dns
+    volumes:
+      - *volume-app
+      - *volume-dns02
+
+volumes:
+  dns01:
+  dns02:
+
+networks:
+  orchestra:
+    name: orchestra
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+          ip_range: 172.30.5.0/24

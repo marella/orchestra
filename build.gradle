@@ -1,0 +1,56 @@
+plugins {
+  id 'org.springframework.boot' version '2.5.4'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+  id 'io.freefair.lombok' version '6.1.0'
+  id 'java'
+  id 'jacoco'
+  id 'com.diffplug.spotless' version '5.14.2'
+  // id 'com.github.spotbugs' version '4.7.3'
+}
+
+group = 'io.github.marella'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'com.github.jnr:jnr-unixsocket:0.38.8'
+  implementation 'info.picocli:picocli-spring-boot-starter:4.6.1'
+  implementation 'org.apache.curator:curator-framework:5.2.0'
+  implementation 'org.apache.curator:curator-recipes:5.2.0'
+  implementation 'org.apache.httpcomponents.client5:httpclient5:5.1'
+  implementation 'org.springframework.boot:spring-boot-starter-web'
+  implementation 'org.springframework.boot:spring-boot-starter-validation'
+  testImplementation 'org.apache.curator:curator-test:5.2.0'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  developmentOnly 'org.springframework.boot:spring-boot-devtools'
+}
+
+test {
+  useJUnitPlatform()
+  finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+  dependsOn test
+}
+
+spotless {
+  java {
+    googleJavaFormat()
+  }
+}
+
+// spotbugsMain {
+//   reports {
+//     xml.enabled = false
+//     html.enabled = true
+//   }
+// }
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs << '-Xlint:all'
+}

@@ -1,0 +1,14 @@
+cluster.local {
+    file dns/dbfile {
+        reload 10s
+    }
+    loadbalance round_robin
+    errors
+    log
+}
+
+. {
+    forward . 8.8.8.8 8.8.4.4
+    errors
+    log
+}
