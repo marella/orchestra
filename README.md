@@ -1,4 +1,4 @@
-# Orchestra
+# Orchestra [![build](https://github.com/marella/orchestra/actions/workflows/build.yml/badge.svg)](https://github.com/marella/orchestra/actions/workflows/build.yml)
 
 A basic container orchestration tool written in Java. It uses ZooKeeper for storing data, Docker for running containers and CoreDNS for service discovery.
 
